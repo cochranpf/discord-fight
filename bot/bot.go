@@ -30,6 +30,7 @@ var (
 	stopRegex    *regexp.Regexp
 	clearRegex   *regexp.Regexp
 	nextRegex    *regexp.Regexp
+	debugRegex   *regexp.Regexp
 	fighterRegex *regexp.Regexp
 	powerRegex   *regexp.Regexp
 	nerfRegex    *regexp.Regexp
@@ -57,12 +58,21 @@ func Start() {
 	stopRegex, _ = regexp.Compile("^/stop($|\\s.*)")
 	clearRegex, _ = regexp.Compile("^/clear($|\\s.*)")
 	nextRegex, _ = regexp.Compile("^/next($|\\s.*)")
+	debugRegex, _ = regexp.Compile("^/debug($|\\s.*)")
 	fighterRegex, _ = regexp.Compile("^/fighter($|\\s.*)")
 	powerRegex, _ = regexp.Compile("^/power($|\\s.*)")
 	nerfRegex, _ = regexp.Compile("^/nerf($|\\s.*)")
 
 	//handlers
 	goBot.AddHandler(collectHandler)
+	goBot.AddHandler(startHandler)
+	goBot.AddHandler(stopHandler)
+	goBot.AddHandler(clearHandler)
+	goBot.AddHandler(nextHandler)
+	goBot.AddHandler(debugHandler)
+	goBot.AddHandler(fighterHandler)
+	goBot.AddHandler(powerHandler)
+	goBot.AddHandler(nerfHandler)
 
 	err = goBot.Open()
 	if err != nil {
@@ -136,6 +146,7 @@ func clearHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 					fmt.Println(err.Error())
 				}
 			} else {
+				Round = 0
 				data.Clear()
 				if _, err := s.ChannelMessageSend(m.ChannelID, "Data cleared."); err != nil {
 					fmt.Println(err.Error())
@@ -163,6 +174,22 @@ func nextHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+func debugHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author.ID != BotId {
+		if debugRegex.MatchString(m.Content) {
+			fmt.Println("got call to /debug")
+			fmt.Println("--------------------")
+			fmt.Println("Phase: " + CurrentPhase)
+			fmt.Println("Round: " + fmt.Sprint(Round))
+			fmt.Println("--------------------")
+			fmt.Println(data.Fighters)
+			fmt.Println(data.Powers)
+			fmt.Println(data.Nerfs)
+			fmt.Println("--------------------")
+		}
+	}
+}
+
 func fighterHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID != BotId {
 		if fighterRegex.MatchString(m.Content) && CurrentPhase == Collecting {
@@ -173,6 +200,7 @@ func fighterHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				fighter := m.Content[len("/fighter "):]
 
 				//add fighter
+				fmt.Println("adding fighter \"" + fighter + "\"")
 				data.AddFighter(fighter)
 			}
 
@@ -194,6 +222,7 @@ func powerHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				power := m.Content[len("/power "):]
 
 				//add power
+				fmt.Println("adding power \"" + power + "\"")
 				data.AddPower(power)
 			}
 
@@ -215,6 +244,7 @@ func nerfHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 				nerf := m.Content[len("/nerf "):]
 
 				//add nerf
+				fmt.Println("adding nerf \"" + nerf + "\"")
 				data.AddNerf(nerf)
 			}
 
@@ -259,7 +289,9 @@ func GetFightString(round int) (string, error) {
 		return "", err
 	}
 
-	return "Round " + fmt.Sprint(round) + "...\n\nWho would win?\n" +
+	return "Round " + fmt.Sprint(round) + ":\n" +
+		"--------------------------------------------------------------" + "Who would win?\n" +
 		fighter1 + " with " + power1 + " but " + nerf1 + "\nOR\n" +
-		fighter2 + " with " + power2 + " but " + nerf2, nil
+		fighter2 + " with " + power2 + " but " + nerf2 +
+		"--------------------------------------------------------------", nil
 }

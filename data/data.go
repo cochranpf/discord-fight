@@ -9,23 +9,23 @@ var Fighters []string
 var Powers []string
 var Nerfs []string
 
-func add(input string, list []string) {
-	if list == nil {
-		list = make([]string, 0)
+func add(input string, list *[]string) {
+	if *list == nil {
+		*list = make([]string, 0)
 	}
-	list = append(list, input)
+	*list = append(*list, input)
 }
 
 func AddFighter(fighter string) {
-	add(fighter, Fighters)
+	add(fighter, &Fighters)
 }
 
 func AddPower(power string) {
-	add(power, Powers)
+	add(power, &Powers)
 }
 
 func AddNerf(nerf string) {
-	add(nerf, Nerfs)
+	add(nerf, &Nerfs)
 }
 
 func getRandom(list []string) (string, error) {
